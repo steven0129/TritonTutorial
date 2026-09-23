@@ -69,6 +69,10 @@ NUM_SM = properties["multiprocessor_count"]
 NUM_REGS = properties["max_num_regs"]
 SIZE_SMEM = properties["max_shared_mem"]
 WARP_SIZE = properties["warpSize"]
+print(f"Number of SM: {NUM_SM}")
+print(f"Number of registers: {NUM_REGS}")
+print(f"Shared Memory of each SM: {SIZE_SMEM}")
+print(f"Number of threads in a Warp: {WARP_SIZE}")
 target = triton.runtime.driver.active.get_current_target()
 kernels = {}
 
