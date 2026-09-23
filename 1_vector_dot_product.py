@@ -77,5 +77,4 @@ def dot_product(x: torch.Tensor, y: torch.Tensor):
 x = torch.Tensor([1, 2, 3, 4]).cuda()
 y = torch.Tensor([4, 3, 2, 1]).cuda()
 
-print(dot_product(x, y))
-print(torch.dot(x, y))
+assert dot_product(x, y) == torch.dot(x, y)
