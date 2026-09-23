@@ -9,10 +9,10 @@ def dot_kernel(
     y_ptr,
     partial_sum_ptr,
     N_ELEMENTS: tl.constexpr,
-    NUM_PROGRAMS: tl.constexpr,
     BLOCK_SIZE: tl.constexpr
 ):
     pid = tl.program_id(0)
+    NUM_PROGRAMS = tl.num_programs(0)
 
     # Initialize the output buffer
     output = tl.zeros((BLOCK_SIZE,), dtype=tl.float32)
@@ -61,7 +61,6 @@ def dot_product(x: torch.Tensor, y: torch.Tensor):
         y,
         partial_sums,
         N_ELEMENTS=n_elements,
-        NUM_PROGRAMS=num_programs,
         BLOCK_SIZE=block_size,
     )
 
