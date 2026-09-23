@@ -51,7 +51,7 @@ def product_kernel(
 def dot_product(x: torch.Tensor, y: torch.Tensor):
     n_elements = x.numel()
     block_size = min(1024, n_elements)
-    num_programs = min(20, triton.cdiv(n_elements, block_size))
+    num_programs = min(100, triton.cdiv(n_elements, block_size))
     partial_sums = torch.empty((block_size), device=x.device)
 
     output = torch.empty((), device=x.device)
@@ -78,3 +78,36 @@ x = torch.Tensor([1, 2, 3, 4]).cuda()
 y = torch.Tensor([4, 3, 2, 1]).cuda()
 
 assert dot_product(x, y) == torch.dot(x, y)
+
+torch.manual_seed(0)
+
+@triton.testing.perf_report(
+    triton.testing.Benchmark(
+        x_names=['size'],
+        x_vals=[2 ** i for i in range(1, 20)],
+        line_arg='provider',
+        line_vals=['triton', 'torch'],
+        line_names=['Triton', 'Torch'],
+        styles=[('blue', '-'), ('green', '-')],
+        ylabel='GB/s',
+        plot_name='dot-product-performance',
+        args={}
+    )
+)
+def benchmark(size, provider):
+    x = torch.rand(size, device='cuda', dtype=torch.float32)
+    y = torch.rand(size, device='cuda', dtype=torch.float32)
+    quantiles = [0.5, 0.2, 0.8]
+    stream = getattr(torch, 'cuda').Stream()
+    getattr(torch, 'cuda').set_stream(stream)
+
+    if provider == 'torch':
+        func = lambda: torch.dot(x, y)
+    elif provider == 'triton':
+        func = lambda: dot_product(x, y)
+
+    ms, min_ms, max_ms = triton.testing.do_bench(func, quantiles=quantiles)
+    gbps = lambda ms: 2 * x.numel() * x.element_size() * 1e-9 / (ms * 1e-3)
+    return gbps(ms), gbps(min_ms), gbps(max_ms)
+
+benchmark.run(save_path='./1_vector_dot_product')
